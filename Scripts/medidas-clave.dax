@@ -1,0 +1,388 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// MEDIDAS CLAVE  ·  DAX
+// Proyecto: Cumplimiento de plazos de entrega — Centro de Distribucion
+//
+// El modelo tiene 45 medidas alojadas en la tabla vacia _Medidas, agrupadas en
+// carpetas de visualizacion. Aqui estan las que resuelven un problema concreto.
+//
+// El razonamiento de cada bloque esta en el README del repositorio.
+// ═══════════════════════════════════════════════════════════════════════════
+
+
+// ╔═════════════════════════════════════════════════════════════════════════╗
+// ║  1.  BASE Y DENOMINADORES                                               ║
+// ╚═════════════════════════════════════════════════════════════════════════╝
+
+// COUNTROWS sobre la dimension, no DISTINCTCOUNT sobre el detalle.
+// Es la ventaja de haber puesto Dim_OV como dimension y no como tabla de hechos.
+OVs = COUNTROWS( Dim_OV )
+
+Pickings = COUNTROWS( Dim_Picking )
+
+Lineas = COUNTROWS( F_Linea_Picking )
+
+
+// ╔═════════════════════════════════════════════════════════════════════════╗
+// ║  2.  EL JUICIO DE CUMPLIMIENTO                                          ║
+// ║      Tres valores, no dos. Un pedido sin fecha de cierre NO es un       ║
+// ║      pedido cumplido: con solo dos categorias, los 275 sin medicion     ║
+// ║      se habrian contado como cumplidos.                                 ║
+// ╚═════════════════════════════════════════════════════════════════════════╝
+
+// COLUMNA CALCULADA en Dim_OV
+Cumple_SLA =
+SWITCH(
+    TRUE(),
+    ISBLANK( Dim_OV[LeadTime_Hab] ),            "Sin medicion",
+    Dim_OV[LeadTime_Hab] <= Dim_OV[SLA_Horas],  "Cumple",
+                                                "Incumple"
+)
+
+OVs Medibles     = CALCULATE( [OVs], Dim_OV[Cumple_SLA] <> "Sin medicion" )
+OVs Dentro de SLA = CALCULATE( [OVs], Dim_OV[Cumple_SLA] =  "Cumple" )
+OVs Fuera de SLA = CALCULATE( [OVs], Dim_OV[Cumple_SLA] =  "Incumple" )
+OVs Sin Medir    = CALCULATE( [OVs], Dim_OV[Cumple_SLA] =  "Sin medicion" )
+
+// El denominador son los MEDIBLES, nunca el total.
+// Incluir lo que no se puede medir reporta un cumplimiento mejor que el real.
+% Incumplimiento SLA = DIVIDE( [OVs Fuera de SLA], [OVs Medibles] )
+
+% Cumplimiento SLA = DIVIDE( [OVs Dentro de SLA], [OVs Medibles] )
+
+% Cobertura Medicion = DIVIDE( [OVs Medibles], [OVs] )
+
+OVs Sin Datos Comerciales =
+CALCULATE( [OVs], Dim_OV[Tiene_Datos_Comerciales] = "Sin datos comerciales" )
+
+
+// ╔═════════════════════════════════════════════════════════════════════════╗
+// ║  3.  TIEMPOS                                                            ║
+// ║      MEDIANA, no promedio. Los tiempos tienen casos extremos (pedidos   ║
+// ║      que esperan semanas por una compra): el promedio los sigue, la     ║
+// ║      mediana describe el pedido tipico, que es lo gestionable.          ║
+// ╚═════════════════════════════════════════════════════════════════════════╝
+
+LeadTime Mediano (h)       = MEDIAN( Dim_OV[LeadTime_Cal] )
+LeadTime Habil Mediano (h) = MEDIAN( Dim_OV[LeadTime_Hab] )
+
+// Cuantas horas por encima del plazo, solo sobre los que incumplen.
+// Responde "y cuando falla, por cuanto falla" — que no es lo mismo que el %.
+Horas de Exceso =
+VAR Exceso =
+    AVERAGEX(
+        FILTER( Dim_OV, Dim_OV[Cumple_SLA] = "Incumple" ),
+        Dim_OV[LeadTime_Hab] - Dim_OV[SLA_Horas]
+    )
+RETURN
+    Exceso
+
+
+// ╔═════════════════════════════════════════════════════════════════════════╗
+// ║  4.  VALOR                                                              ║
+// ║      Valor_OV viene de STG_Valor_OV, que ya resolvio el importe no      ║
+// ║      aditivo. Sumarlo desde las lineas inflaba el total un 42 %.        ║
+// ╚═════════════════════════════════════════════════════════════════════════╝
+
+Valor Total OV = SUM( Dim_OV[Valor_OV] )
+
+Valor en Riesgo =
+CALCULATE( SUM( Dim_OV[Valor_OV] ), Dim_OV[Cumple_SLA] = "Incumple" )
+
+
+// ╔═════════════════════════════════════════════════════════════════════════╗
+// ║  5.  LA PREGUNTA ORIGINAL DE GERENCIA                                   ║
+// ║      REMOVEFILTERS en numerador Y denominador. La primera version daba  ║
+// ║      1,63 % porque CALCULATE sobrescribia el segmentador en una parte   ║
+// ║      y no en la otra: un conflicto de contexto de filtro que NO lanza   ║
+// ║      ningun error. Se detecto moviendo el segmentador y preguntandose   ║
+// ║      por que cambio lo que cambio.                                      ║
+// ╚═════════════════════════════════════════════════════════════════════════╝
+
+% OVs Post 19h =
+VAR _Nocturnas =
+    CALCULATE(
+        [OVs],
+        REMOVEFILTERS( Dim_OV[Franja_Ingreso] ),
+        Dim_OV[Franja_Ingreso] = "6. Nocturno (>19:00)"
+    )
+VAR _Total =
+    CALCULATE( [OVs], REMOVEFILTERS( Dim_OV[Franja_Ingreso] ) )
+RETURN
+    DIVIDE( _Nocturnas, _Total )
+
+
+// ╔═════════════════════════════════════════════════════════════════════════╗
+// ║  6.  LA COMPARATIVA CONTRA EL MES ANTERIOR  ·  cascada de 4 niveles     ║
+// ║                                                                         ║
+// ║      1. el numero base                                                  ║
+// ║      2. el mismo numero con el contexto desplazado  (DATEADD)           ║
+// ║      3. la resta, con la guarda de un solo periodo                      ║
+// ║      4. la lectura: flecha, signo y unidad                              ║
+// ╚═════════════════════════════════════════════════════════════════════════╝
+
+// ── Nivel 2 ──────────────────────────────────────────────────────────────
+// DATEADD no "va a buscar" el mes pasado: desplaza TODO el contexto de filtro
+// un mes atras y vuelve a evaluar la misma medida ahi.
+
+% Incumplimiento Mes Anterior =
+CALCULATE(
+    [% Incumplimiento SLA],
+    DATEADD( Dim_Calendario[Date], -1, MONTH )
+)
+
+LeadTime Mes Anterior =
+CALCULATE(
+    [LeadTime Mediano (h)],
+    DATEADD( Dim_Calendario[Date], -1, MONTH )
+)
+
+% OVs Post 19h Mes anterior =
+CALCULATE(
+    [% OVs Post 19h],
+    DATEADD( Dim_Calendario[Date], -1, MONTH )
+)
+
+// ── Nivel 3 ──────────────────────────────────────────────────────────────
+// LA GUARDA ES LO QUE HACE HONESTA LA MEDIDA.
+// Como DATEADD desplaza el rango completo, con los siete meses seleccionados
+// compararia "ene-jul" contra "dic-jun" y la resta saldria ~0. La guarda obliga
+// a que haya exactamente un mes activo; si no, devuelve BLANK en vez de un cero
+// que pareceria "no cambio nada".
+//
+// Cada VAR se evalua UNA sola vez, ANTES del RETURN, en el contexto donde se
+// declara. Cuando el IF corre, _Actual y _Previo ya son numeros fijos.
+
+Var Incumplimiento MoM =
+VAR _Meses  = DISTINCTCOUNT( Dim_Calendario[Anio_Mes] )
+VAR _Actual = [% Incumplimiento SLA]
+VAR _Previo = [% Incumplimiento Mes Anterior]
+RETURN
+    IF(
+        _Meses <> 1 || ISBLANK( _Previo ) || ISBLANK( _Actual ),
+        BLANK(),
+        _Actual - _Previo
+    )
+
+Var OVs Post 19h MoM =
+VAR _Meses  = DISTINCTCOUNT( Dim_Calendario[Anio_Mes] )
+VAR _Actual = [% OVs Post 19h]
+VAR _Previo = [% OVs Post 19h Mes anterior]
+RETURN
+    IF(
+        _Meses <> 1 || ISBLANK( _Previo ) || ISBLANK( _Actual ),
+        BLANK(),
+        _Actual - _Previo
+    )
+
+// ── Nivel 4 ──────────────────────────────────────────────────────────────
+// El umbral es una BANDA MUERTA: sin ella una diferencia de centesimas
+// apareceria como "cambio" y el usuario reaccionaria a ruido.
+//
+// EL UMBRAL TIENE QUE ESTAR EN LA ESCALA DE LA MEDIDA.
+//   porcentaje  ->  ±0,005  (medio punto porcentual)
+//   horas       ->  ±0,2    (doce minutos)
+// Replicar el patron entre medidas de escalas distintas sin ajustar el umbral
+// deja la flecha congelada en "=" sin que nada falle.
+
+Etiqueta Var Incumplimiento =
+VAR _Var = [Var Incumplimiento MoM]
+VAR _Flecha =
+    SWITCH(
+        TRUE(),
+        ISBLANK( _Var ),  "",
+        _Var >  0.005,    "▲",
+        _Var < -0.005,    "▼",
+                          "="
+    )
+RETURN
+    IF(
+        ISBLANK( _Var ),
+        "sin mes previo",
+        _Flecha & " " & FORMAT( ABS( _Var ) * 100, "0.00" ) & " pp vs. mes anterior"
+    )
+
+Etiqueta Var LeadTime =
+VAR _Meses = DISTINCTCOUNT( Dim_Calendario[Anio_Mes] )
+VAR _Act   = [LeadTime Mediano (h)]
+VAR _Pre   = [LeadTime Mes Anterior]
+VAR _Var   = IF( _Meses <> 1 || ISBLANK( _Pre ) || ISBLANK( _Act ), BLANK(), _Act - _Pre )
+VAR _Flecha =
+    SWITCH(
+        TRUE(),
+        ISBLANK( _Var ), "",
+        _Var >  0.2,     "▲",
+        _Var < -0.2,     "▼",
+                         "="
+    )
+RETURN
+    IF(
+        ISBLANK( _Var ),
+        "sin mes previo",
+        _Flecha & " " & FORMAT( ABS( _Var ), "0.00" ) & " h vs. mes anterior"
+    )
+
+Etiqueta Var OVs Post 19h =
+VAR _Var = [Var OVs Post 19h MoM]
+VAR _Flecha =
+    SWITCH(
+        TRUE(),
+        ISBLANK( _Var ),  "",
+        _Var >  0.002,    "▲",
+        _Var < -0.002,    "▼",
+                          "="
+    )
+RETURN
+    IF(
+        ISBLANK( _Var ),
+        "sin mes previo",
+        _Flecha & " " & FORMAT( ABS( _Var ) * 100, "0.00" ) & " pp vs. mes anterior"
+    )
+
+Etiqueta Pedidos Fuera Mes Anterior =
+VAR _Meses  = DISTINCTCOUNT( Dim_Calendario[Anio_Mes] )
+VAR _Previo = CALCULATE( [OVs Fuera de SLA], DATEADD( Dim_Calendario[Date], -1, MONTH ) )
+RETURN
+    IF(
+        _Meses <> 1 || ISBLANK( _Previo ),
+        "",
+        "mes anterior: " & FORMAT( _Previo, "#,##0" ) & " pedidos"
+    )
+
+
+// ╔═════════════════════════════════════════════════════════════════════════╗
+// ║  7.  LOS SEMAFOROS DE TARJETA                                           ║
+// ║      Separan el numero del juicio. La medida numerica alimenta ejes y    ║
+// ║      formato condicional; esta, en texto, solo vive en la tarjeta.      ║
+// ║                                                                         ║
+// ║      LOS UMBRALES LOS DEFINIO EL ANALISTA, no la empresa — y por eso    ║
+// ║      estan declarados en la pagina de Calidad del tablero.              ║
+// ╚═════════════════════════════════════════════════════════════════════════╝
+
+KPI Incumplimiento =
+VAR _Valor = [% Incumplimiento SLA]
+VAR _Semaforo =
+    SWITCH( TRUE(),
+        _Valor <= 0.15, "🟢",
+        _Valor <= 0.30, "🟡",
+                        "🔴" )
+RETURN
+    FORMAT( _Valor, "0.0%" ) & "  " & _Semaforo
+
+KPI Pedidos Fuera = FORMAT( [OVs Fuera de SLA], "#,##0" )
+
+KPI LeadTime =
+VAR _Valor = [LeadTime Mediano (h)]
+VAR _Semaforo =
+    SWITCH( TRUE(),
+        _Valor <= 12, "🟢",
+        _Valor <= 24, "🟡",
+                      "🔴" )
+RETURN
+    FORMAT( _Valor, "0.0" ) & " h  " & _Semaforo
+
+KPI Post 19h =
+VAR _Valor = [% OVs Post 19h]
+VAR _Semaforo =
+    SWITCH( TRUE(),
+        _Valor <= 0.03, "🟢",
+        _Valor <= 0.08, "🟡",
+                        "🔴" )
+RETURN
+    FORMAT( _Valor, "0.00%" ) & "  " & _Semaforo
+
+KPI Valor en Riesgo =
+VAR _Valor = [Valor en Riesgo]
+VAR _Total = [Valor Total OV]
+VAR _Ratio = DIVIDE( _Valor, _Total )
+VAR _Texto = "S/ " & FORMAT( DIVIDE( _Valor, 1000000 ), "0.00" ) & " M"
+VAR _Semaforo =
+    SWITCH( TRUE(),
+        _Ratio <= 0.15, "🟢",
+        _Ratio <= 0.30, "🟡",
+                        "🔴" )
+RETURN
+    _Texto & "  " & _Semaforo
+
+KPI Var Incumplimiento =
+VAR _Var = [Var Incumplimiento MoM]
+VAR _Flecha =
+    SWITCH( TRUE(),
+        ISBLANK( _Var ),  "",
+        _Var >  0.005,    "▲",
+        _Var < -0.005,    "▼",
+                          "=" )
+VAR _Texto =
+    IF( ISBLANK( _Var ),
+        "sin mes previo",
+        FORMAT( ABS( _Var ) * 100, "0.0" ) & " pp vs. mes anterior" )
+RETURN
+    _Flecha & " " & _Texto
+
+
+// ╔═════════════════════════════════════════════════════════════════════════╗
+// ║  8.  CRUZAR LA CONSTELACION                                             ║
+// ║      El filtro nace en una tabla de hechos y tiene que llegar a una      ║
+// ║      dimension. Sin CROSSFILTER las categorias muestran todas el mismo  ║
+// ║      valor: el otro error que no avisa.                                 ║
+// ╚═════════════════════════════════════════════════════════════════════════╝
+
+// EL HALLAZGO DOMINANTE DEL PROYECTO.
+% Incumplimiento por Accion =
+CALCULATE(
+    [% Incumplimiento SLA],
+    CROSSFILTER( Dim_OV[Nro_Doc], F_Linea_OV[Nro_Doc], BOTH )
+)
+
+LeadTime por Picking =
+CALCULATE(
+    [LeadTime Habil Mediano (h)],
+    CROSSFILTER( Dim_OV[Nro_Doc], F_Linea_Picking[Nro_Doc], BOTH )
+)
+
+Lineas por Picking =
+CALCULATE(
+    [Lineas],
+    CROSSFILTER( Dim_OV[Nro_Doc], F_Linea_Picking[Nro_Doc], BOTH )
+)
+
+// Un solo calendario sirviendo dos fechas. La relacion con la fecha de creacion
+// del picking esta INACTIVA en el modelo y se activa solo dentro de esta medida.
+Pickings del Dia =
+CALCULATE(
+    [Pickings],
+    USERELATIONSHIP( Dim_Calendario[Date], Dim_Picking[Fecha_Creacion_Picking] )
+)
+
+
+// ╔═════════════════════════════════════════════════════════════════════════╗
+// ║  9.  LA PAGINA EMERGENTE (tooltip)                                      ║
+// ║      Doble CROSSFILTER: responde a los segmentadores de CUALQUIERA de   ║
+// ║      las dos tablas de hechos, asi que necesita las dos relaciones      ║
+// ║      abiertas en el mismo CALCULATE. Con una sola, los valores se       ║
+// ║      repetian al pasar el cursor por el panel de complejidad.           ║
+// ╚═════════════════════════════════════════════════════════════════════════╝
+
+TT Pedidos =
+CALCULATE(
+    [OVs],
+    CROSSFILTER( Dim_OV[Nro_Doc], F_Linea_OV[Nro_Doc],      BOTH ),
+    CROSSFILTER( Dim_OV[Nro_Doc], F_Linea_Picking[Nro_Doc], BOTH )
+)
+
+// Los tres estados tienen que sumar el total. La cuarta tarjeta existe porque
+// "A tiempo" + "Fuera de plazo" NO daba "Pedidos": faltaban los 275 sin medicion.
+// No era un error de calculo, era una categoria oculta.
+TT Sin Medir = [TT Pedidos] - [TT Pedidos Dentro] - [TT Pedidos Fuera]
+
+// El titulo dice de que esta hablando, sea cual sea la dimension por la que el
+// usuario este pasando el cursor.
+TT Titulo =
+SELECTEDVALUE( Dim_OV[Modo_Entrega],
+    SELECTEDVALUE( Dim_OV[Franja_Ingreso],
+        SELECTEDVALUE( F_Linea_OV[Tipo_Abastecimiento],
+            SELECTEDVALUE( Dim_Picking[Tamaño_Picking],
+                SELECTEDVALUE( Dim_Calendario[Mes], "Total" )
+            )
+        )
+    )
+)

@@ -1,12 +1,12 @@
-# Datos de origen — NO se publican (información de un ex-empleador)
-data/raw/
+# Datos de origen — NO se publican (informacion de una empresa real)
 *.xlsx
 *.xls
 *.csv
 
-# Binario de Power BI: contiene los datos embebidos y Git no lo versiona de forma útil
+# Binarios de Power BI: contienen los datos embebidos
 *.pbix
 *.pbit
+*.pbids
 
 # Temporales de Office y del sistema
 ~$*
