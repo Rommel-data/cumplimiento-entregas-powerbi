@@ -1,6 +1,6 @@
 ![Rommel Data — Analítica de datos, IA aplicada, decisiones de negocio](Picture/banner.png)
 
-# Cumplimiento de plazos de entrega — Centro de Distribución
+# 📦 Análisis de Cumplimiento de Entregas en un Centro de Distribución — Power BI, ETL y Modelo Dimensional
 
 **Me pidieron medir cuántos pedidos entraban después de las 7 de la noche. Eran el 2,21 % del total — y los que mejor cumplían.** Este es el proyecto de Power BI que, en vez de entregar ese número, encontró las dos causas que sí explicaban que uno de cada dos pedidos llegara tarde.
 
