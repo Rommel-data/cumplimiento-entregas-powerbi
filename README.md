@@ -1,4 +1,4 @@
-![Power BI — ETL, modelo dimensional y DAX](Picture/banner.png)
+![Rommel Data — Analítica de datos, IA aplicada, decisiones de negocio](Picture/banner.png)
 
 # Cumplimiento de plazos de entrega — Centro de Distribución
 
@@ -6,13 +6,13 @@
 
 `Power BI` · `Power Query (M)` · `DAX` · `Modelo dimensional en constelación`
 
-Distribuidor mayorista de materiales eléctricos · Enero – Julio 2025 · 18.538 pedidos · 2 fuentes, 270.703 registros crudos
+Distribuidor mayorista de materiales eléctricos · Enero – Julio 2025 · **18.538 pedidos** · 2 fuentes del ERP · 270.703 registros crudos
 
 ![Página de resumen del tablero](Picture/01-resumen.png)
 
 ## 📩 Conéctate conmigo
 
-¿Tienes un proceso donde nadie sabe por qué se incumple, datos repartidos entre Excel y el ERP, o un tablero que muestra mucho y no termina en ninguna decisión? Eso es lo que resuelvo: entender el negocio, modelar el dato y dejar un indicador que alguien pueda accionar.
+¿Tienes un proceso donde nadie sabe por qué se incumple, datos repartidos entre el ERP y Excel, o un tablero que muestra mucho y no termina en ninguna decisión? Eso es lo que resuelvo: entender el negocio, modelar el dato y dejar un indicador accionable.
 
 <p align="center">
   <a href="https://www.linkedin.com/in/rommel-aar%C3%B3n-reynaga-alvarado-470299222/">
@@ -32,41 +32,39 @@ Distribuidor mayorista de materiales eléctricos · Enero – Julio 2025 · 18.5
 
 ## 🎯 1. El problema y las hipótesis
 
-La gerencia de operaciones pidió un dato puntual: el porcentaje de órdenes de venta que ingresan después de las 19:00. La hipótesis implícita era que los pedidos tardíos congestionaban el día siguiente.
+La gerencia de operaciones pidió el porcentaje de órdenes que ingresan después de las 19:00, asumiendo que los pedidos tardíos congestionaban el día siguiente.
 
-El problema real era otro: **el 51,1 % de los pedidos no llegaba dentro del plazo prometido al cliente** — 9.324 pedidos, con S/ 48,27 millones de facturación expuesta a reclamo. El indicador se mantiene entre 49,5 % y 54,2 % durante los siete meses, sin estacionalidad: es crónico y estructural.
+El problema real era otro: **el 51,1 % de los pedidos no llegaba dentro del plazo prometido** — 9.324 pedidos, S/ 48,27 M de facturación expuesta. El indicador se mantiene entre 49,5 % y 54,2 % durante los siete meses: crónico y estructural, sin estacionalidad.
 
-La hora de ingreso era un síntoma que alguien asumió como causa. Antes de responder lo que me pidieron, verifiqué si era cierto.
+Antes de responder lo que me pidieron, verifiqué si la hora de ingreso era realmente la causa.
 
-### Las cinco hipótesis, con su criterio de refutación definido antes de medir
+### Cinco hipótesis, con su criterio de refutación definido antes de medir
 
 | # | Hipótesis | Qué la daría por falsa | Veredicto |
 |---|---|---|---|
-| H1 | La hora de ingreso explica el incumplimiento | Que las franjas horarias muestren tasas similares entre sí | ❌ **Refutada** |
-| H2 | La carga diaria del almacén lo explica | Que no haya relación creciente entre volumen y tiempo | ❌ **Refutada** |
-| H3 | La complejidad del pedido lo explica | Que el tiempo se mantenga plano al aumentar las líneas | ✅ Confirmada |
+| H1 | La hora de ingreso explica el incumplimiento | Que las franjas horarias muestren tasas similares | ❌ **Refutada** |
+| H2 | La carga diaria del almacén lo explica | Que no haya relación creciente volumen → tiempo | ❌ **Refutada** |
+| H3 | La complejidad del pedido lo explica | Que el tiempo se mantenga plano al subir las líneas | ✅ Confirmada |
 | H4 | La disponibilidad del producto lo explica | Que el tiempo sea similar con y sin stock | ✅ Confirmada |
-| H5 | Algún plazo prometido no es alcanzable | Que la mediana de cada modalidad esté dentro de su plazo | ✅ Confirmada |
-
-El criterio de refutación es lo que convierte una sospecha en hipótesis: define por adelantado qué resultado la daría por falsa. Sin él, cualquier gráfico confirma lo que uno ya creía.
+| H5 | Algún plazo prometido no es alcanzable | Que la mediana de cada modalidad entre en su plazo | ✅ Confirmada |
 
 ![Página de diagnóstico](Picture/02-diagnostico.png)
 
-### Lo que la evidencia descartó
+### Lo que descarté
 
-**La hora de ingreso no explica nada.** Las seis franjas se mueven entre 41,7 % y 53,0 %: once puntos de rango contra un incumplimiento general del 51,1 %. La franja nocturna —la sospechosa— es la que **menos** incumple.
+**La hora de ingreso.** Las seis franjas se mueven entre 41,7 % y 53,0 %: once puntos de rango contra un 51,1 % general. La nocturna —la sospechosa— es la que **menos** incumple.
 
-**La carga del almacén tampoco.** El almacén procesa entre 110 y 170 pickings diarios y el tiempo se mantiene entre 5 y 10 horas hábiles, muy por debajo de las 24 comprometidas. Más carga no produce más demora: no se satura. Este hallazgo descartó ampliar la dotación, que era la decisión más costosa sobre la mesa.
+**La carga del almacén.** Procesa entre 110 y 170 pickings diarios con tiempos de 5 a 10 horas hábiles, muy por debajo de las 24 comprometidas. Más carga no produce más demora. Esto descartó ampliar la dotación, la decisión más costosa sobre la mesa.
 
-### Las dos causas reales, y una falla de diseño
+### Lo que confirmé
 
 | Factor | Efecto |
 |---|---|
-| **Disponibilidad de stock** | Con el producto en almacén, el 49,33 % llega tarde. Si requiere traslado, 78,25 %. Si hay que comprarlo, **86,88 %**. El problema nace antes del almacén, en abastecimiento |
-| **Complejidad del picking** | Hasta 15 líneas se prepara en 6-9 horas, dentro del plazo. A partir de 16 líneas el tiempo salta a **31 horas** y rompe las 24 comprometidas |
-| **El plazo de recojo** | Promete **2 horas hábiles** sobre un proceso cuya mediana real es **4,2 horas**. Su 76,3 % de incumplimiento no mide una falla del equipo: mide una promesa que el proceso nunca pudo cumplir |
+| **Disponibilidad de stock** | Con producto en almacén, **49,33 %** llega tarde. Con traslado, **78,25 %**. Con compra, **86,88 %**. El problema nace antes del almacén, en abastecimiento |
+| **Complejidad del picking** | Hasta 15 líneas: 6-9 h, dentro del plazo. Desde 16 líneas: **31 h**, rompe las 24 comprometidas |
+| **El plazo de recojo** | Promete **2 h hábiles** sobre un proceso de mediana **4,2 h**. Su 76,3 % no mide una falla del equipo: mide una promesa inalcanzable |
 
-La tercera es la corrección más barata del proyecto —un parámetro, no un proceso— y la de mayor impacto, porque es la modalidad con la peor tasa.
+La tercera es la corrección más barata —un parámetro, no un proceso— y la de mayor impacto sobre el indicador global.
 
 ---
 
@@ -74,46 +72,72 @@ La tercera es la corrección más barata del proyecto —un parámetro, no un pr
 
 ### Las fuentes
 
-| | Fuente 1 | Fuente 2 |
+Dos extractos del **ERP corporativo**, de módulos distintos:
+
+| | Módulo de almacén | Módulo comercial |
 |---|---|---|
-| **Qué es** | Listado de documentos de picking | Listado de órdenes de venta |
-| **Sistema** | ERP — módulo de almacén | ERP — módulo comercial |
-| **Registros crudos** | 108.988 × 30 columnas | 161.715 × 32 columnas |
-| **Grano** | Una fila por línea de picking | Una fila por línea de orden |
-| **Qué aporta** | Fechas y horas de todo el ciclo, cantidades, modalidad de entrega | Acción de abastecimiento, stock por almacén, precio, atributos del producto |
+| **Qué registra** | Documentos de picking | Órdenes de venta |
+| **Volumen** | 108.988 × 30 | 161.715 × 32 |
+| **Grano** | Línea de picking | Línea de orden |
+| **Aporta** | Fechas y horas del ciclo, cantidades, modalidad de entrega | Acción de abastecimiento, stock por almacén, precio, atributos de producto |
 
-**Universo analizado:** solo el almacén del CD, solo órdenes de venta, solo 2025. Resultado: 70.493 filas de picking · 21.761 pickings · 18.538 pedidos · **98,52 % con tiempo medible**.
+**Universo:** almacén del CD · solo órdenes de venta · solo 2025 → 70.493 filas · 21.761 pickings · 18.538 pedidos · **98,52 % con tiempo medible**.
 
-Los archivos de origen no están en este repositorio: son datos de una empresa real. El código exportado en [`Scripts/`](Scripts/) permite auditar cada transformación sin exponerlos.
+Los extractos no están publicados: son datos de una empresa real. El código en [`Scripts/`](Scripts/) permite auditar cada transformación sin exponerlos.
+
+### Los siete controles de limpieza
+
+Antes de transformar nada, pasé el conjunto por siete controles. Esta tabla resume qué encontró cada uno y qué hice.
+
+| # | Control | Hallazgo | Acción |
+|:--:|---|---|---|
+| 1 | **Duplicados exactos** | 1.006 filas idénticas en el extracto de picking | Eliminadas con `Table.Distinct` — **después** de quitar el correlativo del export, que hacía única a cada fila |
+| 2 | **Textos inconsistentes** | `Forma_Entrega` traía variantes del mismo valor: `Recjo-Tda`, `Des-Lima`, `Des-Prov`, mayúsculas y abreviaturas mezcladas | Normalizadas a 4 modos con `Text.StartsWith`, más una categoría `Sin clasificar` visible |
+| 3 | **Valores nulos** | `Comentarios_Picking`, `Fecha_GR` y `Fa_Creacion` con nulos dispersos | Cada columna derivada lleva su `if … = null then null`. Nunca se rellena: un nulo propagado es información, un cero es una afirmación falsa |
+| 4 | **Campo horario corrupto** | `PICKING_FECHA` con reloj de 12 h sin AM/PM — las horas solo iban de 1 a 12 | Se conserva únicamente la fecha. La hora se declara irrecuperable y no se usa en ningún cálculo |
+| 5 | **Importe no aditivo** | `DOC_VENTA_SOL` repetido en cada línea del detalle | Reducido al grano de pedido antes de sumar *(detalle abajo)* |
+| 6 | **Rango de fechas** | 291 pedidos emitidos en 2024 | **Excluidos del período.** Al ser backlog ya vencido, su exclusión hace que el incumplimiento reportado sea conservador |
+| 7 | **Registros sin cierre** | 275 pedidos sin fecha de entrega registrada | **No se excluyen del universo:** se clasifican como «sin medición» y salen del denominador del indicador, pero siguen contando en el total |
+
+> **Los controles 6 y 7 son exclusiones distintas y no deben confundirse.** El 6 saca registros del *período analizado*. El 7 los mantiene en el universo pero los deja fuera del *cálculo del indicador*, porque no tienen con qué medirse.
 
 ### La arquitectura del ETL
 
-Dieciocho consultas en Power Query, por capas, numeradas en orden de dependencia. Nueve entran al modelo; las demás son andamiaje con la carga deshabilitada.
+```
+         fnHorasHabiles
+                │
+   ┌────────────┴────────────┐
+01_picking_base        02_ov_base          ← leen el ERP · sin carga
+   │                         │
+   ├── 6 consultas STG ──────┤              ← preparan · sin carga
+   │                         │
+   ├── Dim_OV · Dim_Picking · Dim_Producto  ← Agrupar por
+   └── F_Linea_Picking · F_Linea_OV         ← Elegir columnas
+```
 
-| Capa | ¿Entra al modelo? | Se construye con |
-|---|---|---|
-| Función personalizada | No | — |
-| Base *(lectura del Excel + limpieza)* | **No** | Filtros, tipado, deduplicación |
-| Staging | **No** | Agrupar por |
-| Dimensión | Sí | Agrupar por |
-| Hechos | Sí | **Elegir columnas** |
-| Documentación | Sí | Enter Data |
+| Capa | Técnica | ¿Carga? |
+|---|---|:--:|
+| Función | Parametrizada, 4 argumentos | — |
+| Base | Filtros · tipado con locale · deduplicación | ✖ |
+| Staging | Agrupar por | ✖ |
+| Dimensión | Agrupar por + merge | ✔ |
+| Hechos | Elegir columnas | ✔ |
+| Documentación | Enter Data | ✔ |
 
-Las consultas derivadas son **referencias** a la base, no duplicados. Un arreglo en la base se propaga a las nueve que dependen de ella; con duplicados habría que arreglar nueve veces lo mismo — y olvidarse de una.
+**18 consultas · 9 tablas en el modelo.** Todas las derivadas son *referencias* a la base: se arregla en un solo punto y se propaga a las nueve que dependen de ella.
 
 ![Árbol de dependencias de consultas](Picture/dependencias-consultas.png)
 
-### Las cuatro trampas del dato
+### Las cuatro transformaciones que decidieron el resultado
 
-Lo que separa un ETL que corre de uno que dice la verdad. Las cuatro se detectaron con **números de control**, no leyendo columnas.
+Los controles de arriba limpian. Estas cuatro decisiones son las que hicieron que el número fuera correcto — y las cuatro salieron de comparar **conteos entre capas**, no de leer columnas.
 
-#### 1 · Un importe que no se puede sumar
+#### 1 · Importe no aditivo — 42 % de inflación
 
-`DOC_VENTA_SOL` venía repetido en cada línea del detalle: es un dato de cabecera alojado en el detalle. Sumarlo directo daba **S/ 116,75 M contra S/ 82,23 M reales — un 42 % de inflación.**
+`DOC_VENTA_SOL` es un dato de cabecera repetido en cada línea del detalle. Sumado directo daba **S/ 116,75 M** contra **S/ 82,23 M** reales. Lo resolví con dos agrupaciones encadenadas:
 
-```m
-// Dos agrupaciones encadenadas: la primera colapsa la repetición,
-// la segunda suma los valores ya únicos.
+```fsharp
+// La primera colapsa la repetición; la segunda suma los valores ya únicos.
 #"Quitar repeticion por OV y SKU" =
     Table.Group(Origen, {"Nro_Doc", "Cod_Sap"},
         {{"Valor_Linea", each List.Max([Doc_Venta_Sol]), type nullable number}}),
@@ -122,36 +146,35 @@ Lo que separa un ETL que corre de uno que dice la verdad. Las cuatro se detectar
         {{"Valor_OV", each List.Sum([Valor_Linea]), type nullable number}})
 ```
 
-#### 2 · Un vacío que no era un vacío
+#### 2 · Cobertura: de 66,9 % a 98,52 %
 
-El 68,9 % de los pedidos de recojo no tiene guía de remisión. No era un dato faltante: **es cómo cierra ese proceso** — un recojo se cierra con la factura. Entenderlo subió la cobertura medible del 66,9 % al **98,52 %**.
+El 68,9 % de los recojos no tiene guía de remisión porque **ese proceso cierra con la factura**. Definí el cierre por modalidad:
 
-```m
+```fsharp
 FechaHora_Fin =
     if [Modo_Entrega] = "Recojo en tienda" then [FechaHora_FA]
     else if [FechaHora_GR] <> null         then [FechaHora_GR]
     else [FechaHora_FA]
 ```
 
-#### 3 · Horas calendario que mentían
+#### 3 · Medición en horas hábiles
 
-La política de la empresa está en **horas hábiles**. Un pedido emitido un viernes a las 18:00 no lleva 60 horas de retraso el lunes: lleva las que el almacén estuvo abierto. La función está parametrizada con cuatro horarios, así que sirve a las dos modalidades con ventanas operativas distintas.
+La política de la empresa se expresa en horas hábiles. Construí una función parametrizada con cuatro horarios, para servir a las dos modalidades con ventanas operativas distintas:
 
-```m
+```fsharp
 (Inicio as nullable datetime, Fin as nullable datetime,
  AbreLV as number, CierraLV as number,
  AbreSab as number, CierraSab as number) as nullable number =>
-    // Lista los días del intervalo, calcula la intersección entre la ventana
-    // operativa de cada día y el intervalo real, y suma.
-    // Devuelve null si falta una fecha: un null se clasifica como "sin medición";
-    // un cero se contaría como cumplimiento perfecto.
+    // Lista los días del intervalo, intersecta la ventana operativa de cada uno
+    // con el intervalo real y suma. Devuelve null si falta una fecha: un null
+    // se clasifica como "sin medición"; un cero contaría como cumplimiento.
 ```
 
-#### 4 · Una tabla de hechos que perdió 5.683 filas en silencio
+#### 4 · Integridad de la tabla de hechos
 
-La primera versión de `F_Linea_Picking` usó **Agrupar por** en lugar de **Elegir columnas**: 64.810 filas en vez de 70.493, y 2.951.168 unidades menos. **No dio ningún error.** Se detectó comparando el conteo contra la base.
+Al validar el conteo contra la base detecté una diferencia de **5.683 filas y 2.951.168 unidades** que no producía ningún error. El origen: `Agrupar por` donde correspondía `Elegir columnas`.
 
-> **La regla que salió de ahí:** dimensión → Agrupar por. Hechos → Elegir columnas. En una tabla de hechos el conteo de filas **nunca** cambia al reducir columnas. Si bajó, se usó la herramienta equivocada.
+> **Regla aplicada en todo el modelo:** dimensión → `Agrupar por`. Hechos → `Elegir columnas`. En una tabla de hechos el conteo **nunca** cambia al reducir columnas.
 
 ---
 
@@ -159,26 +182,37 @@ La primera versión de `F_Linea_Picking` usó **Agrupar por** en lugar de **Eleg
 
 ![Modelo relacional](Picture/modelo-relacional.png)
 
-Es una **constelación de hechos**, no una estrella ni un copo de nieve: dos tablas de hechos (`F_Linea_OV` y `F_Linea_Picking`) comparten las mismas dimensiones conformadas.
+**Constelación de hechos:** dos tablas de hechos (`F_Linea_OV` y `F_Linea_Picking`) compartiendo dimensiones conformadas. No es estrella ni copo de nieve.
 
-**Por qué esa forma y no otra.** El indicador vive a nivel de pedido, pero los dos procesos que lo producen tienen granos distintos: la línea comercial y la línea de picking. Analizarlos juntos sin duplicar conteos exige dos tablas de hechos y dimensiones compartidas. Las dimensiones que al principio colgaban de otra dimensión se **aplanaron por merge** — el modelo quedó limpio sin perder un solo atributo.
+El indicador vive a nivel de pedido, pero los dos procesos que lo producen tienen granos distintos —línea comercial y línea de picking—. Analizarlos juntos sin duplicar conteos exige esa forma.
 
-| Decisión | Por qué |
+| Decisión | Efecto |
 |---|---|
-| `Dim_OV` es **dimensión**, no tabla de hechos | El KPI vive a nivel de pedido. Así cada medida es un `COUNTROWS` en vez de un `DISTINCTCOUNT` sobre detalle, con riesgo permanente de duplicar |
-| Un solo calendario con **relaciones inactivas** | Sirve a tres fechas distintas vía `USERELATIONSHIP`, en vez de tres calendarios que triplicarían los segmentadores |
-| Las tablas de hechos llevan **solo llaves y métricas** | Todo lo que sirve para filtrar vive en una dimensión |
-| Los plazos en una **tabla de parámetros** | Recalibrar un SLA es editar una celda, no catorce fórmulas — que es justo la recomendación del informe |
+| `Dim_OV` como **dimensión**, no como hechos | Cada medida es un `COUNTROWS` en vez de un `DISTINCTCOUNT` sobre detalle |
+| **Outriggers aplanados** por merge | Estrella limpia, sin perder un solo atributo |
+| Un calendario con **relaciones inactivas** | Sirve a tres fechas vía `USERELATIONSHIP`, sin triplicar segmentadores |
+| Hechos con **solo llaves y métricas** | Todo lo filtrable vive en una dimensión |
+| SLA en **tabla de parámetros** | Recalibrar un plazo es editar una celda, no catorce fórmulas |
 
 ---
 
 ## 📊 4. Las medidas y el tablero
 
-Cuarenta y cinco medidas alojadas en una tabla vacía, agrupadas en carpetas. Estas cuatro existen porque **sin ellas el número habría estado mal**; el resto son variantes de formato.
+### 4.1 · Cuatro medidas, cuatro problemas resueltos
 
-**Un juicio con tres valores, no dos.** Un pedido sin fecha de cierre no es un pedido cumplido:
+Cada una sigue la misma estructura: **qué quería lograr, qué lo impedía, cómo lo resolví.**
 
-```dax
+---
+
+#### M1 · Clasificar el cumplimiento de cada pedido
+
+| | |
+|---|---|
+| **Objetivo** | Saber si cada pedido llegó dentro del plazo que se le prometió al cliente |
+| **Problema** | 275 pedidos no tienen fecha de cierre registrada. Con solo dos categorías —cumple / no cumple— habrían caído del lado de «cumple» |
+| **Lógica** | Tres estados, no dos. Lo que no se puede medir se declara como tal en vez de asumirse |
+
+```sql
 Cumple_SLA =
 SWITCH( TRUE(),
     ISBLANK( Dim_OV[LeadTime_Hab] ),            "Sin medicion",
@@ -186,15 +220,34 @@ SWITCH( TRUE(),
                                                 "Incumple" )
 ```
 
-**El denominador correcto** — los medibles, nunca el total:
+---
 
-```dax
+#### M2 · El indicador principal
+
+| | |
+|---|---|
+| **Objetivo** | El porcentaje de pedidos fuera de plazo — el KPI que encabeza el tablero |
+| **Problema** | Si el denominador es el total, los 275 sin medición bajan el porcentaje y el resultado sale mejor de lo real |
+| **Lógica** | Dividir sobre los **medibles**, no sobre el total |
+
+```sql
+OVs Medibles     = CALCULATE( [OVs], Dim_OV[Cumple_SLA] <> "Sin medicion" )
+OVs Fuera de SLA = CALCULATE( [OVs], Dim_OV[Cumple_SLA] =  "Incumple" )
+
 % Incumplimiento SLA = DIVIDE( [OVs Fuera de SLA], [OVs Medibles] )
 ```
 
-**`REMOVEFILTERS` en numerador y denominador.** La primera versión de esta medida daba 1,63 % porque `CALCULATE` sobrescribía el segmentador en una parte y no en la otra — un conflicto de contexto de filtro que **no lanza ningún error**:
+---
 
-```dax
+#### M3 · Responder la pregunta original de gerencia
+
+| | |
+|---|---|
+| **Objetivo** | Qué porcentaje del total ingresa después de las 19:00 |
+| **Problema** | La primera versión daba **1,63 %** y el número cambiaba de forma absurda al mover el segmentador de franja horaria. `CALCULATE` reescribía el filtro en el numerador pero no en el denominador — y eso **no lanza ningún error** |
+| **Lógica** | Quitar el filtro de franja en **las dos partes** de la división, para que el denominador sea siempre el total |
+
+```sql
 % OVs Post 19h =
 VAR _Nocturnas = CALCULATE( [OVs],
                     REMOVEFILTERS( Dim_OV[Franja_Ingreso] ),
@@ -203,64 +256,75 @@ VAR _Total     = CALCULATE( [OVs], REMOVEFILTERS( Dim_OV[Franja_Ingreso] ) )
 RETURN DIVIDE( _Nocturnas, _Total )
 ```
 
-**`CROSSFILTER` para cruzar la constelación.** El filtro nace en una tabla de hechos y tiene que llegar a una dimensión. Sin esto las tres categorías de abastecimiento mostraban el mismo valor — el otro error que no avisa:
+Resultado corregido: **2,21 %**, y la franja con **menor** incumplimiento de las seis.
 
-```dax
+---
+
+#### M4 · Cruzar abastecimiento con cumplimiento
+
+| | |
+|---|---|
+| **Objetivo** | Ver el incumplimiento según si el producto estaba en stock, requería traslado o requería compra |
+| **Problema** | La acción de abastecimiento vive en una **tabla de hechos** y el cumplimiento en una **dimensión**. El filtro no viaja en esa dirección: las tres categorías mostraban el mismo valor |
+| **Lógica** | Abrir la relación en ambos sentidos, pero **solo dentro de este cálculo** — nunca como propiedad del modelo |
+
+```sql
 % Incumplimiento por Accion =
 CALCULATE( [% Incumplimiento SLA],
     CROSSFILTER( Dim_OV[Nro_Doc], F_Linea_OV[Nro_Doc], BOTH ) )
 ```
 
-### El lenguaje DAX: las funciones que sostienen el tablero
+Esta medida produjo el hallazgo dominante del proyecto: **49,33 % con stock contra 86,88 % si hay que comprar.**
 
-| Función | Qué resuelve en este modelo |
+---
+
+### 4.2 · Las funciones DAX del modelo
+
+| Función | Para qué la usé |
 |---|---|
-| `VAR` / `RETURN` | Separa el cálculo de la decisión. Cada `VAR` se evalúa **una sola vez, antes del `RETURN`**, en el contexto donde se declara — así una medida reusa un valor tres veces sin recalcularlo |
-| `CALCULATE` | La única función que **modifica el contexto de filtro**. Todo lo demás lo hereda; `CALCULATE` lo reescribe |
-| `SWITCH( TRUE(), … )` | Condiciones encadenadas legibles en vez de `IF` anidados. **Evalúa en orden y se detiene en la primera verdadera** — el orden de las ramas es parte de la lógica |
-| `DATEADD` | Desplaza el contexto de tiempo. No «va a buscar» el mes anterior: recalcula la misma medida sobre un período corrido |
-| `USERELATIONSHIP` | Activa una relación dormida solo dentro de un cálculo. Un calendario sirviendo tres fechas |
-| `CROSSFILTER` | Abre la propagación del filtro entre las dos tablas de hechos de la constelación |
-| `REMOVEFILTERS` | Ignora un segmentador cuando la medida debe responder sobre el total |
+| `VAR` / `RETURN` | Evalúa una sola vez antes del `RETURN`: una medida reusa el valor sin recalcularlo |
+| `CALCULATE` | La única que modifica el contexto de filtro |
+| `SWITCH( TRUE(), … )` | Condiciones en cascada; se detiene en la primera verdadera |
+| `DATEADD` | Desplaza el contexto de tiempo para la comparativa mensual |
+| `USERELATIONSHIP` | Activa una relación inactiva dentro de un cálculo |
+| `CROSSFILTER` | Propaga el filtro entre las dos tablas de hechos |
+| `REMOVEFILTERS` | Ignora un segmentador cuando la medida responde sobre el total |
 
-#### La comparativa contra el mes anterior, nivel por nivel
+### 4.3 · La comparativa contra el mes anterior
 
-El tablero compara cada KPI contra el mes previo. No es una medida: son **cuatro capas encadenadas**, y cada una existe por una razón distinta.
+Cada tarjeta del tablero muestra, debajo del valor, cuánto cambió respecto al mes previo. Eso **no es una medida: son cuatro encadenadas**, y cada nivel llama al anterior.
 
-**Nivel 1 — el número base.** El denominador son los pedidos medibles, nunca el total:
+| Nivel | Medida | Qué hace | ¿Se ve en el tablero? |
+|:--:|---|---|:--:|
+| **1** | `% Incumplimiento SLA` | El número base del mes actual | Sí, en la tarjeta |
+| **2** | `% Incumplimiento Mes Anterior` | El mismo número, un mes atrás | No |
+| **3** | `Var Incumplimiento MoM` | La resta entre ambos | No |
+| **4** | `Etiqueta Var Incumplimiento` | El texto con flecha que lee el usuario | Sí, bajo la tarjeta |
 
-```dax
-% Incumplimiento SLA = DIVIDE( [OVs Fuera de SLA], [OVs Medibles] )
-```
+**Nivel 1** ya está arriba *(M2)*. Los otros tres:
 
-**Nivel 2 — el mismo número, un mes atrás.** `DATEADD` desplaza el contexto completo y la medida se recalcula ahí:
-
-```dax
+```sql
+-- NIVEL 2 · DATEADD no "va a buscar" el mes pasado: desplaza el contexto de
+-- filtro un mes hacia atras y vuelve a evaluar la MISMA medida ahi.
 % Incumplimiento Mes Anterior =
-CALCULATE(
-    [% Incumplimiento SLA],
-    DATEADD( Dim_Calendario[Date], -1, MONTH )
-)
-```
+CALCULATE( [% Incumplimiento SLA], DATEADD( Dim_Calendario[Date], -1, MONTH ) )
 
-**Nivel 3 — la resta, con la guarda que la hace honesta.** Como `DATEADD` desplaza *todo el rango*, con los siete meses seleccionados compararía «ene–jul» contra «dic–jun» y la variación saldría ≈ 0. La guarda obliga a que haya **exactamente un mes activo**; si no, devuelve vacío en vez de un cero que parecería «no cambió nada»:
 
-```dax
+-- NIVEL 3 · La resta, con una guarda.
+-- Como DATEADD desplaza el rango COMPLETO, con los siete meses seleccionados
+-- compararia "ene-jul" contra "dic-jun" y la resta daria casi cero. La guarda
+-- exige que haya exactamente un mes activo; si no, no responde.
 Var Incumplimiento MoM =
 VAR _Meses  = DISTINCTCOUNT( Dim_Calendario[Anio_Mes] )
 VAR _Actual = [% Incumplimiento SLA]
 VAR _Previo = [% Incumplimiento Mes Anterior]
 RETURN
-    IF(
-        _Meses <> 1 || ISBLANK( _Previo ) || ISBLANK( _Actual ),
+    IF( _Meses <> 1 || ISBLANK( _Previo ) || ISBLANK( _Actual ),
         BLANK(),
-        _Actual - _Previo
-    )
-```
+        _Actual - _Previo )
 
-**Nivel 4 — la lectura.** La variación no se muestra cruda: se convierte en flecha, signo y unidad. El umbral de ±0,5 pp es una **banda muerta**: sin ella, una diferencia de centésimas aparecería como «cambio» y el usuario reaccionaría a ruido.
 
-```dax
+-- NIVEL 4 · La lectura: flecha, signo y unidad.
 Etiqueta Var Incumplimiento =
 VAR _Var = [Var Incumplimiento MoM]
 VAR _Flecha =
@@ -270,18 +334,24 @@ VAR _Flecha =
         _Var < -0.005,    "▼",
                           "=" )
 RETURN
-    IF( ISBLANK( _Var ),
-        "sin mes previo",
+    IF( ISBLANK( _Var ), "sin mes previo",
         _Flecha & " " & FORMAT( ABS( _Var ) * 100, "0.00" ) & " pp vs. mes anterior" )
 ```
 
-> **El detalle que decide si el patrón funciona:** el umbral tiene que estar en la escala de la medida. En un porcentaje la banda es ±0,005; en horas es ±0,2. Replicar el patrón entre medidas de escalas distintas sin ajustar el umbral deja la flecha congelada en `=` **sin que nada falle y sin ningún mensaje de error.**
+**Por qué el `0.005` del nivel 4.** Si el indicador pasa de 51,10 % a 51,12 %, técnicamente subió — pero dos centésimas no son un cambio, son ruido. Ese número es el mínimo que hace falta para que la flecha aparezca: **medio punto porcentual**. Por debajo de eso, la tarjeta muestra `=`.
 
-#### El semáforo: separar el número del juicio
+**Y por qué cambia según la medida.** El umbral se escribe en la misma unidad que la medida:
 
-Cada tarjeta muestra valor y color, pero son dos cosas distintas. La medida numérica alimenta ejes y formato condicional; la de texto solo vive en la tarjeta:
+| Medida | Unidad | Umbral | Significa |
+|---|---|---|---|
+| `% Incumplimiento` | Porcentaje *(0,511)* | `0.005` | Medio punto porcentual |
+| `LeadTime Mediano` | Horas *(17,8)* | `0.2` | Doce minutos |
 
-```dax
+Copiar el `0.2` de la medida en horas a una medida en porcentaje sería exigir que cambie **20 puntos** para mostrar la flecha. Nunca se activaría — y no daría ningún error.
+
+**Los semáforos separan el número del juicio.** La medida numérica alimenta ejes y formato condicional; esta, en texto, solo vive en la tarjeta:
+
+```sql
 KPI Incumplimiento =
 VAR _Valor = [% Incumplimiento SLA]
 VAR _Semaforo =
@@ -289,27 +359,32 @@ VAR _Semaforo =
         _Valor <= 0.15, "🟢",
         _Valor <= 0.30, "🟡",
                         "🔴" )
-RETURN
-    FORMAT( _Valor, "0.0%" ) & "  " & _Semaforo
+RETURN FORMAT( _Valor, "0.0%" ) & "  " & _Semaforo
 ```
 
-En las tarjetas de conteo el semáforo juzga el **ratio**, no el valor absoluto: *226 pedidos fuera de plazo* no dice nada sin saber sobre cuántos. Mostrar el conteo y juzgar la proporción es la única combinación que no engaña cuando se lee la tarjeta con un filtro puesto.
+### 4.4 · Las 45 medidas en tres capas
 
-**Los umbrales de este semáforo los definí yo, no la empresa** — y por eso están declarados en la página de Calidad del tablero. Un umbral inventado que se presenta como norma es la forma más rápida de perder credibilidad.
-
-### El tablero
-
-Tres páginas, cada una respondiendo **una** pregunta, más dos páginas de información emergente con navegación y filtrado cruzado.
-
-| Página | Pregunta | Qué tiene |
+| Capa | Función | Ejemplos |
 |---|---|---|
-| **Resumen** | ¿Qué está pasando y cuánto cuesta? | 5 KPI con semáforo, evolución mensual, incumplimiento por modalidad |
-| **Diagnóstico** | ¿Por qué pasa? | Un panel por hipótesis, cada gráfico con su veredicto escrito debajo y la línea de referencia del plazo |
-| **Calidad** | ¿Cuánto de esto puedo creer? | Cobertura, cada regla con su fuente, los datos que faltan y **cómo NO usar este informe** |
+| **Visible** | Aparece en tarjeta, eje o tooltip | `KPI Incumplimiento` · `% Incumplimiento por Accion` · `Pickings del Dia` |
+| **Intermedia** | Sostiene a otra; nunca se muestra | `OVs Medibles` · `% Incumplimiento Mes Anterior` · `Var Incumplimiento MoM` |
+| **Complementaria** | Disponible, sin uso hoy | `% Cumplimiento SLA` · `Horas de Exceso` |
+
+> **Criterio aplicado:** una medida entra al tablero si cambia una decisión. Si solo agrega una lectura más, se queda en el modelo. `Horas de Exceso` —cuánto se excede el plazo cuando se incumple— es el ejemplo: correcta, documentada, y fuera del tablero porque el caso ya se resolvía con el porcentaje y la causa.
+
+### 4.5 · El tablero
+
+Tres páginas, una pregunta cada una, más dos páginas emergentes con navegación y filtrado cruzado.
+
+| Página | Pregunta | Contenido |
+|---|---|---|
+| **Resumen** | ¿Qué pasa y cuánto cuesta? | 5 KPI con semáforo, evolución mensual, incumplimiento por modalidad |
+| **Diagnóstico** | ¿Por qué pasa? | Un panel por hipótesis, cada gráfico con su veredicto y la línea del plazo |
+| **Calidad** | ¿Cuánto puedo creer? | Cobertura, cada regla con su fuente, datos faltantes y **cómo NO usar el informe** |
 
 ![Página de calidad](Picture/03-calidad.png)
 
-**La página de Calidad es la que casi nadie hace.** Declara qué regla viene del procedimiento oficial, cuál la supuso el analista y cuál no existe — incluyendo que **la empresa no tiene meta formal de cumplimiento**, así que decir que 51,1 % es «malo» es criterio mío, no norma.
+La página de **Calidad** declara qué regla viene del procedimiento oficial, cuál definí yo y cuál no existe — incluida la ausencia de meta formal de cumplimiento.
 
 ---
 
@@ -317,33 +392,34 @@ Tres páginas, cada una respondiendo **una** pregunta, más dos páginas de info
 
 ### Qué demuestra este proyecto
 
-| Capacidad | Dónde se ve |
+| Capacidad técnica | Evidencia en el repositorio |
 |---|---|
-| **Reformular el pedido del stakeholder** | El pedido era la hora de ingreso; el problema era el quiebre de stock |
-| **Hipótesis falsables** | Criterio de refutación definido antes de medir, y dos hipótesis refutadas |
-| **ETL con lenguaje M** | 18 consultas por capas, funciones parametrizadas, arquitectura de referencias |
-| **Detectar errores silenciosos** | Campo no aditivo, filas perdidas por la herramienta equivocada, contexto de filtro |
-| **Modelado dimensional** | Constelación de hechos, dimensiones conformadas, outriggers aplanados, relaciones inactivas |
-| **DAX no trivial** | `USERELATIONSHIP`, `CROSSFILTER`, `REMOVEFILTERS`, guardas de período |
-| **Diseño orientado a decisión** | Cada gráfico con su veredicto; un bloque de qué **no** hacer |
-| **Honestidad analítica** | Página de calidad, proxies declarados, hipótesis descartadas publicadas |
+| **Extracción y limpieza en M** | 18 consultas por capas, tipado con locale, deduplicación sobre llave real |
+| **Funciones personalizadas** | `fnHorasHabiles` parametrizada con 4 argumentos |
+| **Arquitectura de consultas** | Referencias en vez de duplicados; carga selectiva de 9 de 18 |
+| **Modelado dimensional** | Constelación, dimensiones conformadas, outriggers aplanados, relaciones inactivas |
+| **Control de integridad** | Números de control entre capas; detección del campo no aditivo y de las filas perdidas |
+| **DAX avanzado** | `USERELATIONSHIP` · `CROSSFILTER` · `REMOVEFILTERS` · `VAR/RETURN` · guardas de período |
+| **Diseño de tablero** | Jerarquía de tres páginas, tooltips, navegación, formato condicional por reglas |
+| **Trazabilidad** | Reglas, supuestos y vacíos declarados dentro del propio modelo |
 
-> El modelado dimensional y el ETL se trabajaron en conjunto con un colega senior en Power BI. La definición del problema, las hipótesis, las medidas, el diseño del tablero y el análisis son propios.
+### Limitaciones del dato
 
-### Limitaciones
+- **Segmento comercial del cliente:** no existe en la fuente. Se usó una aproximación por frecuencia de compra, declarada como proxy.
+- **Hora de liberación del picking:** no se registra. Impide separar la demora de almacén de la de facturación.
+- **Peso y volumen por producto:** ausentes en el maestro. La complejidad se mide por número de líneas, no por carga física.
+- **291 pedidos de 2024 excluidos** del período. Al ser backlog ya vencido, el incumplimiento real es algo mayor al reportado.
+- **2.567 pedidos sin datos comerciales** completos: entran en el cálculo global, no admiten cortes por cliente o vendedor.
 
-- **El segmento comercial del cliente no existe en la fuente.** Lo usado es una aproximación por comportamiento de compra, declarada como proxy. No sirve para decisiones comerciales por cliente.
-- **No hay meta formal de cumplimiento.** Los umbrales del semáforo (15 % / 30 %) los definí yo. El juicio rojo/ámbar/verde es orientativo, no normativo.
-- **291 pedidos de 2024 están excluidos.** Como ese backlog ya estaba fuera de plazo, el incumplimiento real es algo mayor al 51,1 % reportado.
-- **No se puede separar la demora de almacén de la de facturación**: falta la hora de liberación del picking. Es el primer dato que pediría para cerrar el análisis.
-- **El costo real del incumplimiento no se pudo cuantificar.** Los S/ 48,27 M son facturación *expuesta*, no una pérdida: calcularla exige datos de penalidades y recompra que la empresa no registra.
+### Limitaciones del análisis
+
+- **No hay meta formal de cumplimiento** en la empresa. Los umbrales 15 % / 30 % son criterio del analista.
+- **Los S/ 48,27 M son facturación expuesta, no pérdida.** Cuantificar el costo real exige penalidades y recompra, que no se registran.
 
 ### Qué hay en este repositorio
 
 | Ruta | Contenido |
 |---|---|
-| [`Scripts/etl-powerquery.pq`](Scripts/etl-powerquery.pq) | Las 18 consultas en lenguaje M, en orden de dependencia |
-| [`Scripts/medidas-clave.dax`](Scripts/medidas-clave.dax) | Las medidas que resuelven un problema concreto, con su justificación |
+| [`Scripts/etl-powerquery.pq`](Scripts/etl-powerquery.pq) | 18 consultas en lenguaje M, en orden de dependencia |
+| [`Scripts/medidas-clave.dax`](Scripts/medidas-clave.dax) | Las medidas del modelo, agrupadas por lo que resuelven |
 | [`Picture/`](Picture/) | Modelo relacional, árbol de dependencias y las tres páginas del tablero |
-
-El `.pbix` no está publicado: es un binario que contiene los datos de origen embebidos.
